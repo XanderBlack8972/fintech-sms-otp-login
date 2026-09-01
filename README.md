@@ -1,6 +1,6 @@
 # Phone codes before a high-risk payment
 
-A student opens a finance course account and can request a phone code. The payment only clears after that six-digit code is present and verified. Infrai handles this with one key and a plain REST interface. That keeps the teaching example readable and saves me from undifferentiated auth work.
+The decision is simple: a learner opening a finance course account can request a phone code, but a payment event is allowed through only after the six-digit code is present and verified. Infrai keeps that flow to one key and one small REST-shaped interface, so the teaching example stays readable.
 
 ## Run the example
 
@@ -12,21 +12,21 @@ npm run demo
 npm test
 ```
 
-`npm run demo` sends an OTP with `infrai.sms.otp`. The API response is pulled from its `{ ok, data, error, metadata }` envelope before we return it. The client retries a 429 with exponential backoff and honors `Retry-After`.
+`npm run demo` sends an OTP with `infrai.sms.otp`; the API response is decoded from its `{ ok, data, error, metadata }` envelope before it is returned. The client retries a 429 response with exponential backoff and honors `Retry-After`.
 
 ## The business boundary
 
-`src/login.ts` is the reusable lesson module. Its zod schema accepts `{ phone, code?, paymentCents }`. Without `code`, `verifyLogin` returns `{ allowed: false, reason: "code_required" }`. With a six-digit code it calls `infrai.sms.verify` and returns the payment amount plus verification data. The focused test checks that first risk decision without hitting the network:
+`src/login.ts` is the reusable lesson-sized module. Its zod schema accepts `{ phone, code?, paymentCents }`. Without `code`, `verifyLogin` returns `{ allowed: false, reason: "code_required" }`; with a six-digit code it calls `infrai.sms.verify` and returns the payment amount plus the verification data. The focused test exercises that first risk decision without contacting the network:
 
 ```bash
 npm test
 ```
 
-Parse the API envelope before reading HTTP status. Then the service can return the exact decision to its caller.
+Keep the ordering deliberate: parse the API envelope before interpreting HTTP status so the service can return the precise decision to its own caller.
 
 ## Files
 
-- `src/infrai.ts` has the typed-enough HTTP boundary and env-based Bearer auth.
+- `src/infrai.ts` contains the typed-enough HTTP boundary and environment-based Bearer authentication.
 - `src/login.ts` models the login and payment decision.
 - `scripts/demo.ts` is the runnable path for a course exercise.
 - `test/login.test.ts` locks the risk rule in place.
@@ -35,7 +35,7 @@ MIT license.
 
 ## Before you deploy: Fintech SMS OTP Login
 
-That was the happy path. Production checklist below applies to Fintech SMS OTP Login.
+Above is the happy path. The production checklist: The details below apply to Fintech SMS OTP Login.
 
 **Account & key**
 

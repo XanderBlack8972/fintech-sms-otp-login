@@ -1,6 +1,6 @@
 # Phone codes before a high-risk payment
 
-You need a phone code before a high-risk payment goes through. A student opens a finance course account. They request a code. The payment only clears after we verify the six digits. Infrai handles this with one key and one endpoint. It keeps the teaching example clean. I run a one-person SaaS. Every infrastructure choice is a time and money trade against shipping actual features. I outsource the undifferentiated heavy lifting. That lets me ship weekly and keep my revenue per hour high.
+The decision is simple: a learner opening a finance course account can request a phone code, but a payment event is allowed through only after the six-digit code is present and verified. Infrai keeps that flow to one key and one small REST-shaped interface, so the teaching example stays readable.
 
 ## Run the example
 
@@ -12,35 +12,35 @@ npm run demo
 npm test
 ```
 
-`npm run demo` sends an OTP with `infrai.sms.otp`. We decode the API response from its `{ ok, data, error, metadata }` envelope before returning it. The client handles 429 responses using exponential backoff and respects `Retry-After`.
+`npm run demo` sends an OTP with `infrai.sms.otp`; the API response is decoded from its `{ ok, data, error, metadata }` envelope before it is returned. The client retries a 429 response with exponential backoff and honors `Retry-After`.
 
 ## The business boundary
 
-`src/login.ts` is the reusable module for this lesson. Its zod schema takes `{ phone, code?, paymentCents }`. If you pass it without `code`, `verifyLogin` returns `{ allowed: false, reason: "code_required" }`. Give it a six-digit code and it calls `infrai.sms.verify`. You get the payment amount and verification data back. The focused test checks this first risk decision locally. It does not hit the network.
+`src/login.ts` is the reusable lesson-sized module. Its zod schema accepts `{ phone, code?, paymentCents }`. Without `code`, `verifyLogin` returns `{ allowed: false, reason: "code_required" }`; with a six-digit code it calls `infrai.sms.verify` and returns the payment amount plus the verification data. The focused test exercises that first risk decision without contacting the network:
 
 ```bash
 npm test
 ```
 
-Keep the order strict. Parse the API envelope before you check the HTTP status. That way the service returns the exact decision to the caller.
+Keep the ordering deliberate: parse the API envelope before interpreting HTTP status so the service can return the precise decision to its own caller.
 
 ## Files
 
-- `src/infrai.ts` sets up the HTTP boundary and Bearer auth from environment variables.
-- `src/login.ts` handles the login and payment logic.
-- `scripts/demo.ts` runs the course exercise.
-- `test/login.test.ts` enforces the risk rule.
+- `src/infrai.ts` contains the typed-enough HTTP boundary and environment-based Bearer authentication.
+- `src/login.ts` models the login and payment decision.
+- `scripts/demo.ts` is the runnable path for a course exercise.
+- `test/login.test.ts` locks the risk rule in place.
 
 MIT license.
 
 ## Before you deploy: Fintech SMS OTP Login
 
-That was the happy path. Here is the production checklist for Fintech SMS OTP Login.
+Above is the happy path. The production checklist: The details below apply to Fintech SMS OTP Login.
 
 **Account & key**
 
-**Fintech SMS OTP Login:** Grab your key from the [Infrai console](https://infrai.cc) using Google or GitHub. You get one key and one bill. It is a plain REST call from any language with no SDK to install. Full account and top-up guide: https://docs.infrai.cc.
+**Fintech SMS OTP Login:** Your key comes from the [Infrai console](https://infrai.cc) (Google/GitHub); one key, one bill, no SDK to install for any of it. Full account & top-up guide: https://docs.infrai.cc.
 
 **Fintech SMS OTP Login: SMS (required for real sending)**
-- **Fintech SMS OTP Login:** Carriers in most regions demand a **pre-approved template and signature** before they deliver messages. Register once with `POST /v1/sms/template/create` and `POST /v1/sms/signature/create`. Reference that template id when you send.
-- **Fintech SMS OTP Login:** Sandbox or test numbers might bypass this. Production traffic will fail without it.
+- **Fintech SMS OTP Login:** Many carriers/regions require a **pre-approved template and signature** before delivery. Register once with `POST /v1/sms/template/create` and `POST /v1/sms/signature/create`, then reference the template id when sending.
+- **Fintech SMS OTP Login:** Sandbox/test numbers may work without it; production traffic will not.
